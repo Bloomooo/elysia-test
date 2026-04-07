@@ -1,1 +1,2 @@
 [test]
+coverageThreshold = 0.8
