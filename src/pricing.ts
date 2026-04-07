@@ -77,3 +77,52 @@ export function calculateSurge(hour: number, dayOfWeek: string): number {
   if (hour >= 19 && hour < 21) return 1.5;
   return 1.0;
 }
+
+export interface OrderItem {
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+export interface OrderResult {
+  subtotal: number;
+  discount: number;
+  deliveryFee: number;
+  surge: number;
+  total: number;
+}
+
+export function calculateOrderTotal(
+  items: OrderItem[] | null | undefined,
+  distance: number,
+  weight: number,
+  promoCode: string | null,
+  hour: number,
+  dayOfWeek: string,
+): OrderResult {
+  if (!items || items.length === 0) {
+    throw new Error("Le panier ne peut pas etre vide");
+  }
+
+  for (const item of items) {
+    if (item.price < 0) throw new Error("Le prix d'un article ne peut pas etre negatif");
+    if (item.quantity <= 0) throw new Error("La quantite doit etre superieure a 0");
+  }
+
+  const surge = calculateSurge(hour, dayOfWeek);
+  if (surge === 0) throw new Error("Le restaurant est ferme");
+
+  const subtotal = Math.round(
+    items.reduce((sum, item) => sum + item.price * item.quantity, 0) * 100,
+  ) / 100;
+
+  const discountedSubtotal = applyPromoCode(subtotal, promoCode, DEFAULT_PROMO_CODES);
+  const discount = Math.round((subtotal - discountedSubtotal) * 100) / 100;
+
+  const baseFee = calculateDeliveryFee(distance, weight);
+  const deliveryFee = Math.round(baseFee * surge * 100) / 100;
+
+  const total = Math.round((discountedSubtotal + deliveryFee) * 100) / 100;
+
+  return { subtotal, discount, deliveryFee, surge, total };
+}

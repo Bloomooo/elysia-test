@@ -1,5 +1,11 @@
 import { describe, it, expect } from "bun:test";
-import { calculateDeliveryFee, applyPromoCode, calculateSurge, type PromoCode } from "../src/pricing";
+import {
+  calculateDeliveryFee,
+  applyPromoCode,
+  calculateSurge,
+  calculateOrderTotal,
+  type PromoCode,
+} from "../src/pricing";
 
 describe("calculateDeliveryFee", () => {
   it("should return base fee when distance <= 3km and weight <= 5kg", () => {
@@ -136,5 +142,73 @@ describe("calculateSurge", () => {
 
   it("should return 0 when sunday before 10h", () => {
     expect(calculateSurge(8, "sunday")).toBe(0);
+  });
+});
+
+describe("calculateOrderTotal", () => {
+  const items = [{ name: "Pizza", price: 12.5, quantity: 2 }];
+
+  it("should calculate correct total for normal order", () => {
+    const result = calculateOrderTotal(items, 5, 2, null, 15, "tuesday");
+    expect(result.subtotal).toBe(25);
+    expect(result.discount).toBe(0);
+    expect(result.deliveryFee).toBe(3.0);
+    expect(result.surge).toBe(1.0);
+    expect(result.total).toBe(28.0);
+  });
+
+  it("should apply promo code and calculate total", () => {
+    const result = calculateOrderTotal(items, 5, 2, "BIENVENUE20", 15, "tuesday");
+    expect(result.subtotal).toBe(25);
+    expect(result.discount).toBe(5);
+    expect(result.total).toBe(23.0);
+  });
+
+  it("should apply surge to delivery fee only", () => {
+    const result = calculateOrderTotal(items, 5, 2, null, 20, "friday");
+    expect(result.surge).toBe(1.8);
+    expect(result.deliveryFee).toBe(5.4);
+    expect(result.subtotal).toBe(25);
+    expect(result.total).toBe(30.4);
+  });
+
+  it("should throw when items array is empty", () => {
+    expect(() => calculateOrderTotal([], 5, 2, null, 15, "tuesday")).toThrow("Le panier ne peut pas etre vide");
+  });
+
+  it("should throw when items is null", () => {
+    expect(() => calculateOrderTotal(null, 5, 2, null, 15, "tuesday")).toThrow("Le panier ne peut pas etre vide");
+  });
+
+  it("should throw when item has negative price", () => {
+    const badItems = [{ name: "Bad", price: -5, quantity: 1 }];
+    expect(() => calculateOrderTotal(badItems, 5, 2, null, 15, "tuesday")).toThrow();
+  });
+
+  it("should throw when restaurant is closed", () => {
+    expect(() => calculateOrderTotal(items, 5, 2, null, 23, "tuesday")).toThrow("Le restaurant est ferme");
+  });
+
+  it("should throw when distance exceeds 10km", () => {
+    expect(() => calculateOrderTotal(items, 15, 2, null, 15, "tuesday")).toThrow();
+  });
+
+  it("should return correct structure with all fields", () => {
+    const result = calculateOrderTotal(items, 3, 1, null, 15, "tuesday");
+    expect(result).toHaveProperty("subtotal");
+    expect(result).toHaveProperty("discount");
+    expect(result).toHaveProperty("deliveryFee");
+    expect(result).toHaveProperty("surge");
+    expect(result).toHaveProperty("total");
+  });
+
+  it("should handle order with multiple items", () => {
+    const multiItems = [
+      { name: "Pizza", price: 12.5, quantity: 2 },
+      { name: "Soda", price: 3.0, quantity: 1 },
+    ];
+    const result = calculateOrderTotal(multiItems, 3, 1, null, 15, "tuesday");
+    expect(result.subtotal).toBe(28.0);
+    expect(result.total).toBe(30.0);
   });
 });
