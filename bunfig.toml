@@ -1,2 +1,2 @@
 [test]
-preload = []
+coverageThreshold = 0.8
