@@ -59,3 +59,21 @@ export function applyPromoCode(
 
   return Math.max(0, Math.round(result * 100) / 100);
 }
+
+export function calculateSurge(hour: number, dayOfWeek: string): number {
+  if (hour < 10 || hour >= 22) return 0;
+
+  const day = dayOfWeek.toLowerCase();
+
+  if (day === "sunday") return 1.2;
+
+  if (day === "friday" || day === "saturday") {
+    if (hour >= 19) return 1.8;
+    return 1.0;
+  }
+
+  // Monday-Thursday
+  if (hour >= 12 && hour < 13.5) return 1.3;
+  if (hour >= 19 && hour < 21) return 1.5;
+  return 1.0;
+}

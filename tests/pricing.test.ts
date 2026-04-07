@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { calculateDeliveryFee, applyPromoCode, type PromoCode } from "../src/pricing";
+import { calculateDeliveryFee, applyPromoCode, calculateSurge, type PromoCode } from "../src/pricing";
 
 describe("calculateDeliveryFee", () => {
   it("should return base fee when distance <= 3km and weight <= 5kg", () => {
@@ -94,5 +94,47 @@ describe("applyPromoCode", () => {
 
   it("should throw when subtotal is negative", () => {
     expect(() => applyPromoCode(-10, "BIENVENUE20", promoCodes)).toThrow();
+  });
+});
+
+describe("calculateSurge", () => {
+  it("should return 1.0 when normal weekday afternoon", () => {
+    expect(calculateSurge(15, "tuesday")).toBe(1.0);
+  });
+
+  it("should return 1.3 when weekday lunch", () => {
+    expect(calculateSurge(12.5, "wednesday")).toBe(1.3);
+  });
+
+  it("should return 1.5 when weekday dinner", () => {
+    expect(calculateSurge(20, "thursday")).toBe(1.5);
+  });
+
+  it("should return 1.8 when weekend evening", () => {
+    expect(calculateSurge(20, "friday")).toBe(1.8);
+  });
+
+  it("should return 1.2 when sunday", () => {
+    expect(calculateSurge(14, "sunday")).toBe(1.2);
+  });
+
+  it("should return 0 when closed before 10h", () => {
+    expect(calculateSurge(9, "monday")).toBe(0);
+  });
+
+  it("should return 0 when closed at 22h", () => {
+    expect(calculateSurge(22, "tuesday")).toBe(0);
+  });
+
+  it("should return 1.0 when exactly 10h weekday", () => {
+    expect(calculateSurge(10, "monday")).toBe(1.0);
+  });
+
+  it("should return 1.0 when saturday daytime", () => {
+    expect(calculateSurge(14, "saturday")).toBe(1.0);
+  });
+
+  it("should return 0 when sunday before 10h", () => {
+    expect(calculateSurge(8, "sunday")).toBe(0);
   });
 });
