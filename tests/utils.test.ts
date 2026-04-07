@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { capitalize, calculateAverage, slugify, clamp } from "../src/utils";
+import { capitalize, calculateAverage, slugify, clamp, sortStudents, type Student } from "../src/utils";
 
 describe("capitalize", () => {
   it("should return capitalized string when given lowercase", () => {
@@ -91,5 +91,54 @@ describe("clamp", () => {
   it("should return 0 when all zeros", () => {
     const result = clamp(0, 0, 0);
     expect(result).toBe(0);
+  });
+});
+
+describe("sortStudents", () => {
+  const students: Student[] = [
+    { name: "Charlie", grade: 15, age: 22 },
+    { name: "Alice", grade: 18, age: 20 },
+    { name: "Bob", grade: 12, age: 21 },
+  ];
+
+  it("should sort students by grade ascending", () => {
+    const result = sortStudents(students, "grade", "asc");
+    expect(result.map((s) => s.name)).toEqual(["Bob", "Charlie", "Alice"]);
+  });
+
+  it("should sort students by grade descending", () => {
+    const result = sortStudents(students, "grade", "desc");
+    expect(result.map((s) => s.name)).toEqual(["Alice", "Charlie", "Bob"]);
+  });
+
+  it("should sort students by name ascending", () => {
+    const result = sortStudents(students, "name", "asc");
+    expect(result.map((s) => s.name)).toEqual(["Alice", "Bob", "Charlie"]);
+  });
+
+  it("should sort students by age ascending", () => {
+    const result = sortStudents(students, "age", "asc");
+    expect(result.map((s) => s.name)).toEqual(["Alice", "Bob", "Charlie"]);
+  });
+
+  it("should return empty array when given null", () => {
+    const result = sortStudents(null, "grade");
+    expect(result).toEqual([]);
+  });
+
+  it("should return empty array when given empty array", () => {
+    const result = sortStudents([], "grade");
+    expect(result).toEqual([]);
+  });
+
+  it("should not modify the original array", () => {
+    const original = [...students];
+    sortStudents(students, "grade", "asc");
+    expect(students).toEqual(original);
+  });
+
+  it("should default to ascending order", () => {
+    const result = sortStudents(students, "grade");
+    expect(result.map((s) => s.name)).toEqual(["Bob", "Charlie", "Alice"]);
   });
 });

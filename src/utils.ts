@@ -23,3 +23,30 @@ export function slugify(text: string | null | undefined): string {
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
+
+export interface Student {
+  name: string;
+  grade: number;
+  age: number;
+}
+
+export function sortStudents(
+  students: Student[] | null | undefined,
+  sortBy: "name" | "grade" | "age",
+  order: "asc" | "desc" = "asc",
+): Student[] {
+  if (!students || students.length === 0) return [];
+
+  const sorted = [...students];
+  sorted.sort((a, b) => {
+    let comparison: number;
+    if (sortBy === "name") {
+      comparison = a.name.localeCompare(b.name);
+    } else {
+      comparison = a[sortBy] - b[sortBy];
+    }
+    return order === "desc" ? -comparison : comparison;
+  });
+
+  return sorted;
+}
